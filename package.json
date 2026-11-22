@@ -1,0 +1,92 @@
+{
+  "name": "@ghuri/vectors",
+  "version": "0.1.0-alpha.0",
+  "description": "Ghuri vectors: embeddings, vector stores (Cloudflare Vectorize, pgvector, the database, memory) and retrieval (RAG) for Ghuri apps and agents",
+  "type": "module",
+  "license": "MIT",
+  "author": "Ghuri contributors",
+  "homepage": "https://github.com/ghurijs/vectors#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ghurijs/vectors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ghurijs/vectors/issues"
+  },
+  "keywords": [
+    "ghuri",
+    "django",
+    "vectors",
+    "embeddings",
+    "rag",
+    "vectorize",
+    "pgvector",
+    "cloudflare",
+    "workers",
+    "ai"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    },
+    "./agents": {
+      "types": "./dist/agents.d.ts",
+      "import": "./dist/agents.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src test",
+    "format": "biome format --write src test"
+  },
+  "peerDependencies": {
+    "@ghuri/agents": "^0.1.0-alpha.5",
+    "@ghuri/core": "^0.1.0-alpha.5",
+    "@ghuri/orm": "^0.1.0-alpha.5"
+  },
+  "peerDependenciesMeta": {
+    "@ghuri/agents": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.6",
+    "@electric-sql/pglite": "^0.5.16",
+    "@electric-sql/pglite-pgvector": "0.0.17",
+    "@ghuri/agents": "^0.1.0-alpha.5",
+    "@ghuri/core": "^0.1.0-alpha.5",
+    "@ghuri/orm": "^0.1.0-alpha.5",
+    "@ghuri/tasks": "^0.1.0-alpha.0",
+    "@ghuri/tenants": "^0.1.0-alpha.3",
+    "@types/node": "^24.0.0",
+    "better-sqlite3": "^13.1.0",
+    "hono": "^4.13.0",
+    "miniflare": "^4.20260730.0",
+    "tsup": "^8.5.1",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  }
+}
