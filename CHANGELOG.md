@@ -8,7 +8,8 @@
   `vectorStores` registry, `VectorStore` / `BaseVectorStore` for your own backends.
 - Embeddings: `'workers-ai:'`, `'openai:'` (and compatible APIs) and `'ghuri-ai:'` model ids with no extra package,
   AI SDK embedding models through `doEmbed`, `registerEmbeddingProvider()`, `embed()` / `embedMany()`. Provider
-  keys come from the store's `providerOptions`, then `AGENTS.PROVIDERS`.
+  keys come from the store's `providerOptions` or, without them, `AGENTS.PROVIDERS`, with environment variables
+  (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `GHURI_AI_URL`, `GHURI_AI_API_KEY`) filling missing keys.
 - `VectorIndex` (`index`, `delete`, `clear`, `keys`, `search`) with chunking (`chunkText`), Django-lookup metadata
   filters (`exact`, `in`, `gt`, `gte`, `lt`, `lte`, `exclude`) and `minScore`.
 - `ModelIndex` (django-haystack's `SearchIndex`): text and metadata of model rows, `indexQueryset`, re-indexing on
@@ -21,3 +22,5 @@
   `@ghuri/tasks`).
 - `@ghuri/vectors/agents`: `searchTool()`, `formatHits()`, `retrieve()`.
 - `@ghuri/vectors/testing`: `fakeEmbedding()`, `fakeVectorize()`, `useVectorStore()`.
+- Docs: the README matches the source (provider-option precedence, optional `embedding`, command options, where
+  `TenantRequired` is raised).

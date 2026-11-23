@@ -69,8 +69,9 @@ hits[0].text   // the matching chunk
 | `databaseStore({ database })` | D1, SQLite, Postgres (`vectors_vectorembedding`) | exact, one namespace at a time — small apps |
 | `memoryStore()` | the process | exact — tests and scripts |
 
-Common options: `embedding` (required), `dimensions` (known for built-in models), `metric` (`'cosine'`,
-`'euclidean'`, `'dot-product'`), `providerOptions`. The store API is Vectorize's (`upsert`, `query`, `getByIds`,
+Common options: `embedding` (optional in the types, but a store without one raises `InvalidVectorStore` when used and
+fails check `vectors.E004`), `dimensions` (known for built-in models), `metric` (`'cosine'`, `'euclidean'`,
+`'dot-product'`), `providerOptions`. The store API is Vectorize's (`upsert`, `query`, `getByIds`,
 `deleteByIds`); extend `BaseVectorStore` for another backend.
 
 Create Vectorize indexes with the model's dimensions: `wrangler vectorize create mysite-default --dimensions=768
@@ -78,18 +79,22 @@ Create Vectorize indexes with the model's dimensions: `wrangler vectorize create
 
 ## 3. Embedding models
 
-`'workers-ai:@cf/baai/bge-base-en-v1.5'` (the AI binding), `'openai:text-embedding-3-small'` (`OPENAI_API_KEY`,
-`baseURL` for compatible APIs) and `'ghuri-ai:openai/text-embedding-3-small'` (`GHURI_AI_URL`) need no extra
-package. Any AI SDK embedding model works too. Keys come from the store's `providerOptions`, then
-`AGENTS.PROVIDERS[provider]`, then the environment. `registerEmbeddingProvider(name, factory)` adds providers;
-`embed(text)` / `embedMany(texts)` embed with a store's model.
+`'workers-ai:@cf/baai/bge-base-en-v1.5'` (the AI binding), `'openai:text-embedding-3-small'` (`OPENAI_API_KEY`;
+`OPENAI_BASE_URL` or `baseURL` for compatible APIs) and `'ghuri-ai:openai/text-embedding-3-small'` (`GHURI_AI_URL`,
+`GHURI_AI_API_KEY`) need no extra package. Any AI SDK embedding model works too.
+
+Provider options (`apiKey`, `baseURL`, `headers`) are one object: the store's `providerOptions` if it has them,
+otherwise `AGENTS.PROVIDERS[provider]`. The two are **not merged**: `providerOptions` replace the `AGENTS` entry
+entirely. Environment variables then fill each key the object lacks. `registerEmbeddingProvider(name, factory)` adds
+providers; `embed(text, { store, kind })` / `embedMany(texts, { store, kind })` embed with a store's model (`kind` is
+`'query'` or `'document'`, the default).
 
 ## 4. Indexes and search
 
 - `new VectorIndex(name, { store, chunk, tenant, storeText, prefixes })`.
 - `index(docs, { namespace, force, background })` chunks (recursive character splitter, `{ size: 1000, overlap:
   200 }`), embeds and upserts. With the `vectors` app, unchanged documents are skipped and stale chunks removed.
-- `delete(keys)`, `clear()`, `keys()`.
+- `delete(keys)`, `clear()`, `keys()` (the manifest's document keys; needs the `vectors` app).
 - `search(query, { k, filter, exclude, namespace, minScore, includeValues })` → `[{ id, key, chunk, score, text,
   metadata }]`, best first.
 - Filters are Django lookups on metadata: `{ status: 'published', year__gte: 2025, lang__in: ['en'] }`, and
@@ -99,13 +104,14 @@ package. Any AI SDK embedding model works too. Keys come from the store's `provi
 
 `new ModelIndex(Model, { name?, text, metadata?, indexQueryset?, autoIndex = true, background = 'auto' })`:
 re-indexes rows on `postSave` (after commit, `raw` saves skipped), removes them on `postDelete` or when they leave
-`indexQueryset`, and returns hits with `object`. `update()` indexes every row (`ghuri update_index`).
+`indexQueryset`, and returns hits with `object`. `update({ batchSize, force, namespace })` indexes every row (`ghuri update_index`) and removes documents whose rows are
+gone.
 
 ## 6. Tenants
 
 With `@ghuri/tenants`, indexes are scoped to the current tenant (`tenant: 'auto'`): the tenant from core's context
-carriers goes into the store namespace, and every operation without one raises `TenantRequired` (also inside
-`withoutTenant()`). `tenant: false` makes an index shared by every tenant.
+carriers goes into the store namespace, and every operation without one (`index`, `delete`, `clear`, `keys`,
+`search`, and `ModelIndex.update()`) raises `TenantRequired` (also inside `withoutTenant()`). `tenant: false` makes an index shared by every tenant.
 
 ## 7. Background indexing
 
@@ -128,8 +134,11 @@ build a `[n] (key) text` context block for prompts.
 
 ## 9. Commands and checks
 
-`ghuri update_index`, `clear_index`, `rebuild_index` (`[index…] [--tenant pk]`, django-haystack's names) and
-`ghuri createvectortable [--store alias]` (pgvector tables). Checks `vectors.E001`–`E006`, `W001`–`W003`.
+`ghuri update_index`, `clear_index`, `rebuild_index` (`[index…] [--tenant pk] [--namespace name]`, django-haystack's
+names) and `ghuri createvectortable [--store alias]` (pgvector tables). `update_index` and `rebuild_index` also take
+`--batch-size n` (default 100), and `update_index` takes `--force`. `update_index` and `rebuild_index` skip plain
+`VectorIndex`es (only `ModelIndex`es are re-indexed); `clear_index` clears any index. Checks `vectors.E001`–`E006`,
+`W001`–`W003`.
 
 ## 10. Testing
 
